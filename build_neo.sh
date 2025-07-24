@@ -1,5 +1,10 @@
  #!/bin/bash
 
+# Set prefix to current working directory (absolute path)
+prefix=$(pwd)
+
+cd compute-runtime
+
  # revert a change that breaks the cxx03 build
 # https://github.com/intel/compute-runtime/issues/708
 git revert 18c25e5aa3fc00c7d47469713adeace08a9aec07
@@ -22,7 +27,7 @@ CMAKE_FLAGS=()
 CMAKE_FLAGS+=(-DCMAKE_CXX_STANDARD=20)
 
 # Release build for best performance
-CMAKE_FLAGS+=(-DCMAKE_BUILD_TYPE=""" * (debug ? "Debug" : "Release") * raw""")
+CMAKE_FLAGS+=(-DCMAKE_BUILD_TYPE="Debug")
 
 # Install things into $prefix
 CMAKE_FLAGS+=(-DCMAKE_INSTALL_PREFIX=${prefix})
