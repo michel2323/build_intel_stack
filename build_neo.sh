@@ -65,14 +65,17 @@ export PKG_CONFIG_PATH=${prefix}/lib64/pkgconfig:${prefix}/lib/pkgconfig
 export LD_LIBRARY_PATH=${prefix}/lib64:${prefix}/lib:${LD_LIBRARY_PATH}
 
 # Configure cmake with proper library paths
-# CMAKE_FLAGS+=(-DCMAKE_BUILD_RPATH="${prefix}/lib64;${prefix}/lib")
-# CMAKE_FLAGS+=(-DCMAKE_INSTALL_RPATH="${prefix}/lib64;${prefix}/lib")
+CMAKE_FLAGS+=(-DCMAKE_BUILD_RPATH="${prefix}/lib")
+CMAKE_FLAGS+=(-DCMAKE_INSTALL_RPATH="${prefix}/lib")
 
 # Ensure IGC libraries are found during build
 CMAKE_FLAGS+=(-DIGC_DIR="${prefix}")
 
+# Add library search paths for the linker
+CMAKE_FLAGS+=(-DCMAKE_EXE_LINKER_FLAGS="-L${prefix}/lib")
+CMAKE_FLAGS+=(-DCMAKE_SHARED_LINKER_FLAGS="-L${prefix}/lib")
+
 cmake -B build -S . -GNinja ${CMAKE_FLAGS[@]}
 
 # Run ninja with explicit LD_LIBRARY_PATH to ensure ocloc can find IGC libraries
-# LD_LIBRARY_PATH=${prefix}/lib64:${prefix}/lib:${prefix}/compute-runtime/build/bin:${LD_LIBRARY_PATH} ninja -C build -j $(nproc) install
-ninja -C build -j $(nproc) install
+LD_LIBRARY_PATH=${prefix}/lib:${prefix}/compute-runtime/build/bin:${LD_LIBRARY_PATH} ninja -C build -j $(nproc) install
