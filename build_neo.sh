@@ -21,7 +21,17 @@ sed -i '/-Werror/d' CMakeLists.txt
 # Fails because C header is used in C++ code
 sed -i 's/inttypes\.h/cinttypes/g' level_zero/core/source/mutable_cmdlist/mutable_indirect_data.cpp
 
+export PATH=${prefix}/bin:$PATH
+
+ln -sf level-zero include/level-zero
+
 CMAKE_FLAGS=()
+
+# Look for headers and libraries in the prefix
+CMAKE_FLAGS+=(-DCMAKE_PREFIX_PATH=${prefix})
+
+# Explicitly set library search paths for CMake
+CMAKE_FLAGS+=(-DCMAKE_LIBRARY_PATH="${prefix}/lib64:${prefix}/lib")
 
 # Need C++20
 CMAKE_FLAGS+=(-DCMAKE_CXX_STANDARD=20)
@@ -49,9 +59,20 @@ CMAKE_FLAGS+=(-DNEO_ENABLE_i915_PRELIM_DETECTION=TRUE)
 
 # libigc installs libraries and pkgconfig rules in lib64, so look for them there.
 # FIXME: shouldn't BinaryBuilder do this?
-export PATH=${prefix}/bin:$PATH
-export LD_LIBRARY_PATH=${prefix}/lib64:${prefix}/lib
 export PKG_CONFIG_PATH=${prefix}/lib64/pkgconfig:${prefix}/lib/pkgconfig
 
+# Ensure LD_LIBRARY_PATH includes all necessary paths
+export LD_LIBRARY_PATH=${prefix}/lib64:${prefix}/lib:${LD_LIBRARY_PATH}
+
+# Configure cmake with proper library paths
+# CMAKE_FLAGS+=(-DCMAKE_BUILD_RPATH="${prefix}/lib64;${prefix}/lib")
+# CMAKE_FLAGS+=(-DCMAKE_INSTALL_RPATH="${prefix}/lib64;${prefix}/lib")
+
+# Ensure IGC libraries are found during build
+CMAKE_FLAGS+=(-DIGC_DIR="${prefix}")
+
 cmake -B build -S . -GNinja ${CMAKE_FLAGS[@]}
+
+# Run ninja with explicit LD_LIBRARY_PATH to ensure ocloc can find IGC libraries
+# LD_LIBRARY_PATH=${prefix}/lib64:${prefix}/lib:${prefix}/compute-runtime/build/bin:${LD_LIBRARY_PATH} ninja -C build -j $(nproc) install
 ninja -C build -j $(nproc) install
